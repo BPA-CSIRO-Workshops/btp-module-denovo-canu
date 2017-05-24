@@ -1,4 +1,3 @@
-test edit
 # Pacbio reads: assembly with command line tools
 
 *Keywords: de novo assembly, PacBio, PacificBiosciences, Illumina, command line, Canu, Circlator, BWA, Spades, Pilon, Microbial Genomics Virtual Laboratory*
