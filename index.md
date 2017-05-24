@@ -590,12 +590,12 @@ How can we get more information about the assembly from Spades?
 
 ## Next
 
-**Further analyses:**
+### Further analyses 
 
 - Annotate with Prokka.
 - Comparative genomics, e.g. with Roary.
 
-**Links:**
+### Links
 
 - [Details of bas.h5 files](https://s3.amazonaws.com/files.pacb.com/software/instrument/2.0.0/bas.h5+Reference+Guide.pdf)
 - Canu [manual](http://canu.readthedocs.io/en/stable/quick-start.html) and [gitub repository](https://github.com/marbl/canu)
