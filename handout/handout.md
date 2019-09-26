@@ -4,6 +4,13 @@
 
 This tutorial demonstrates how to use long Pacbio sequence reads to assemble a bacterial genome, including correcting the assembly with short Illumina reads.
 
+
+## Author Information
+
+*Primary Author(s):*
+Anna Syme Melbourne Bioinformatics
+
+
 ## Resources
 
 Tools (and versions) used in this tutorial include:
@@ -32,62 +39,45 @@ Simplified version of workflow:
 
 ## Get data
 
-The files we need are:
+The files we need are here [ In a new tab, go to https://doi.org/10.5281/zenodo.1009308]:
 
-- <fn>pacbio.fastq.gz</fn> : the PacBio reads
-- <fn>illumina_R1.fastq.gz</fn>: the Illumina forward reads
-- <fn>illumina_R2.fastq.gz</fn>: the Illumina reverse reads
+- <fn>pacbio.fq</fn> : the PacBio reads
+- <fn>R1.fq</fn>: the Illumina forward reads
+- <fn>R2.fq</fn>: the Illumina reverse reads
 
 If you already have the files, skip forward to next section, [Assemble](#assemble).
 
 Otherwise, this section has information about how to find and move the files:
 
-### PacBio files
+### PacBio and Illumina files
 
-- Open the command line. <!-- own machine, mGVL or BPA VM -->
-- Navigate to or create the directory in which you want to work.
-- If the files are already on your server, you can symlink by using
+In a new tab, go to https://doi.org/10.5281/zenodo.1009308.
+
+Next to the first file, right-click (or control-click) the "Download" button, and select "Copy link address".
+Back in your terminal, enter
 
 ```text
-ln -s real_file_path [e.g. data/sample_name/pacbio1.fastq.gz] chosen_symlink_name [e.g. pacbio1.fastq.gz]
+wget  [paste link URL for file]
+```
+The file should download.
+Note: paste the link to the file, not to the webpage.
+Repeat this for the other two files.
+Shorten each of these files names with the mv command:
+
+```text
+mv R1.fq\?download\=1 R1.fq
+mv R2.fq\?download\=1 R2.fq
+mv pacbio.fq\?download\=1 pacbio.fq
 ```
 
-- Alternatively, obtain the input files from elsewhere, e.g. from the BPA portal. (You will need a password.)
+Type in `ls` to check the files are present and correctly-named.
 
-- Pacbio files are often stored in the format:
-    - <fn>Sample_name/Cell_name/Analysis_Results/long_file_name_1.fastq.gz</fn>
+We should have `R1.fq`, `R2.fq` and `pacbio.fq`.
 
-- We will use the <fn>longfilename.subreads.fastq.gz</fn> files.
-
-- The reads are usually split into three separate files because they are so large.
-
-- Right click on the first <fn>subreads.fastq.gz</fn> file and "copy link address".
-
-- In the command line, type:
 
 ```text
-wget --user username --password password [paste link URL for file]
-```
-- Repeat for the other two <fn>subreads.fastq.gz</fn> files.
-- Join the files:
-```text
-cat pacbio*.fastq.gz > pacbio.fastq.gz
-```
-- If the files are not gzipped, type:
-```text
-cat pacbio*.fastq | gzip > pacbio.fastq.gz
-```
-
-### Illumina files
-
-- We will also use 2 x Illumina (Miseq) fastq.gz files.
-- These are the <fn>R1.fastq.gz</fn> and <fn>R2.fastq.gz</fn> files.
-- Symlink or "wget" these files as described above for PacBio files.
-- Shorten the name of each of these files:
-
-```text
-mv longfilename_R1.fastq.gz illumina_R1.fastq.gz
-mv longfilename_R2.fastq.gz illumina_R2.fastq.gz
+cd denovo-canu
+ls
 ```
 
 ### Sample information
@@ -100,7 +90,7 @@ The sample used in this tutorial is a gram-positive bacteria called *Staphylococ
 - Run Canu with these commands:
 
 ```text
-canu -p canu -d canu_outdir genomeSize=2.8m -pacbio-raw pacbio.fastq.gz
+canu -p canu -d canu_outdir genomeSize=0.03m -pacbio-raw pacbio.fq
 ```
 
 - the first `canu` tells the program to run
@@ -109,6 +99,7 @@ canu -p canu -d canu_outdir genomeSize=2.8m -pacbio-raw pacbio.fastq.gz
 - `genomeSize` only has to be approximate.
     - e.g. *Staphylococcus aureus*, 2.8m
     - e.g. *Streptococcus pyogenes*, 1.8m
+    - (In this case we are using a partial genome of expected size 30,000 base pairs).
 
 - Canu will correct, trim and assemble the reads.
 - Various output will be displayed on the screen.
@@ -130,18 +121,32 @@ infoseq canu.contigs.fasta
 - This will show the contigs found by Canu. e.g.,
 
 ```text
-    - tig00000001	2851805
+    - tig00000001	47997
 ```
 
-This looks like a chromosome of approximately 2.8 million bases.
+- This will show the contigs found by Canu. e.g., tig00000001 47997
+    -"tig00000001" is the name given to the contig
+    -"47997" is the number of base pairs in that contig.
 
-This matches what we would expect for this sample. For other data, Canu may not be able to join all the reads into one contig, so there may be several contigs in the output. Also, the sample may contain some plasmids and these may be found full or partially by Canu as additional contigs.  
+This matches what we were expecting for this sample (approximately 30,000 base pairs). For other data, Canu may not be able to join all the reads into one contig, so there may be several contigs in the output.
+
+We should also look at the canu.report. To do this:
+
+```text
+less canu.report
+```
+- `less` is a command to display the file on the screen.
+- Use the up and down arrows to scroll up and down.
+- You will see lots of histograms of read lengths before and after processing, final contig construction, etc.
+- For a description of the outputs that Canu produces, see: http://canu.readthedocs.io/en/latest/tutorial.html#outputs
+- Type `q` to exit viewing the report
+
 
 ### Change Canu parameters if required
 
 If the assembly is poor with many contigs, re-run Canu with extra sensitivity parameters; e.g.
 ```text
-canu -p prefix -d outdir corMhapSensitivity=high corMinCoverage=0 genomeSize=2.8m -pacbio-raw pacbio.fastq.gz
+canu -p prefix -d outdir corMhapSensitivity=high corMinCoverage=0 genomeSize=.03m -pacbio-raw pacbio.fq
 ```
 
 ### Questions
@@ -209,7 +214,7 @@ less 06.fixstart.log
 infoseq 06.fixstart.fasta
 ```
 
-- tig00000001 2823331 (28564 bases trimmed)
+- tig00000001 30019 (bases trimmed)
 
 This trimmed part is the overlap.
 
@@ -258,13 +263,13 @@ bwa index contig1.fasta
 - Align Illumina reads using using bwa mem:
 
 ```text
-bwa mem -t 8 contig1.fasta illumina_R1.fastq.gz illumina_R2.fastq.gz | samtools sort > aln.bam
+bwa mem -t 8 contig1.fasta R1.fq R2.fq | samtools sort > aln.bam
 ```
 
 - `bwa mem` is the alignment tool
 - `-t 8` is the number of cores: choose an appropriate number
 - `contig1.fasta` is the input assembly file
-- `illumina_R1.fastq.gz illumina_R2.fastq.gz` are the Illumina reads
+- `R1.fq R2.fq` are the Illumina reads
 - ` | samtools sort` pipes the output to samtools to sort
 - `> aln.bam` sends the alignment to the file <fn>aln.bam</fn>
 
@@ -309,23 +314,17 @@ spades.py -1 unmapped.R1.fastq -2 unmapped.R2.fastq -s unmapped.RS.fastq --caref
 Move into the output directory (<fn>spades_assembly</fn>) and look at the contigs:
 
 ```text
+cd spades_assembly
 infoseq contigs.fasta
 ```
-- 78 contigs were assembled, with the max length of 2250 (the first contig).  
-- All other nodes are < 650kb so we will disregard as they are unlikely to be plasmids.
+- 1 contig has been assembled with a length of 2359 bases.
 - Type "q" to exit.
-- We will extract the first sequence (NODE_1):
+
+Copy it to a new file:
 
 ```text
-samtools faidx contigs.fasta
+cp contigs.fasta contig2.fasta
 ```
-
-```text
-samtools faidx contigs.fasta NODE_1_length_2550_cov_496.613 > contig2.fasta
-```
-
-- This is now saved as <fn>contig2.fasta</fn>
-- Open in nano and change header to ">plasmid".
 
 ### Trim the plasmid
 
@@ -337,6 +336,8 @@ To trim any overhang on this plasmid, we will blast the start of contig2 against
 head -n 10 contig2.fasta > contig2.fa.head
 ```
 
+- head -n 10 takes the first ten lines of <fn>contig2.fasta</fn>
+- `>` sends that output to a new file called <fn>contig2.fa.head</fn>
 - We want to see if it matches the end (overhang).
 - Format the assembly file for blast:
 
@@ -349,30 +350,57 @@ makeblastdb -in contig2.fasta -dbtype nucl
 blastn -query contig2.fa.head -db contig2.fasta -evalue 1e-3 -dust no -out contig2.bls
 ```
 
+- `blastn` is the tool Blast, set as blastn to compare sequences of nucleotides to each other
+- `query` sets the input sequence as <fn>contig2.fa.head</fn>
+- `db` sets the database as that of the original sequence <fn>contig2.fasta</fn>. We don't have to specify the other files that were created when we formatted this file, but they need to present in our current directory.
+- `evalue` is the number of hits expected by chance, here set as 1e-3
+- `dust no` turns off the masking of low-complexity regions
+- `out` sets the output file as <fn>contig2.bls</fn>
+
 - Look at <fn>contig2.bls</fn> to see hits:
+
 ```text
 less contig2.bls
 ```
 
-- The first hit is at start, as expected.
-- The second hit is at 2474 all the way to the end - 2550.
+- The first hit is at start, as expected. We can see that "Query 1" (the start of the contig) is aligned to "Sbject 1" (the whole contig), for the first 540 bases.
+- Scroll down with the down arrow.
+- The second hit shows "Query 1" (the start of the contig) also matches to "Sbject 1" (the whole contig) at position 2253, all the way to the end, position 2359. 
 - This is the overhang.
-- Trim to position 2473.
+- Trim to position 2252.
 - Index the plasmid.fa file:
 
+First, change the name of the contig within the file:
+
+
+```text
+nano contig2.fasta
+```
+- `nano` opens up a text editor.
+- Use the arrow keys to navigate. (The mouse won't work.)
+- At the first line, delete the text, which will be something like `>NODE_1_length_2359_cov_3.320333`
+- Type in `>contig2`
+- Don't forget the `>` symbol
+- Press `Control-X`
+- `Save modified buffer ?` - type Y
+- Press the `Enter` key
+
+
+Index the file (this will allow samtools to edit the file as it will have an index):
 ```text
 samtools faidx contig2.fasta
 ```
 
-- Trim:
+- Trim the contig:
 ```text
-samtools faidx contig2.fasta plasmid:1-2473 > plasmid.fa.trimmed
+samtools faidx contig2.fasta plasmid:1-2252 > plasmid.fa.trimmed
 ```
-- `plasmid` is the name of the contig, and we want the sequence from 1-2473.
+- `plasmid` is the name of the contig, and we want the sequence from 1-2252.
 
 - Open this file in nano (`nano plasmid.fa.trimmed`) and change the header to ">plasmid", save.
 - We now have a trimmed plasmid.
 - Move file back into main folder:
+
 
 ```text
 cp plasmid.fa.trimmed ../
