@@ -3,6 +3,18 @@ btp::modules:
     dirs:
       - 'long_reads'
     data:
+      R1.fq: 
+        source: 'https://swift.rc.nectar.org.au/v1/AUTH_809/NGSDataDeNovoCanu'
+        targets: 
+          - 'long_reads/R1.fq'
+      R2.fq: 
+        source: 'https://swift.rc.nectar.org.au/v1/AUTH_809/NGSDataDeNovoCanu'
+        targets: 
+          - 'long_reads/R2.fq'
+      pacbio.fq: 
+        source: 'https://swift.rc.nectar.org.au/v1/AUTH_809/NGSDataDeNovoCanu'
+        targets: 
+          - 'long_reads/pacbio.fq'
       illumina_R1.fastq.gz: 
         source: 'https://swift.rc.nectar.org.au/v1/AUTH_809/NGSDataDeNovoCanu'
         targets: 
